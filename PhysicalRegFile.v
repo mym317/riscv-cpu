@@ -1,33 +1,32 @@
 `include "riscv_define.v"
 
 module PhysicalRegFile #(
-    parameter INT_PREG_NUMS = 64,
-    parameter F_PREG_NUMS = 64
-)
-(
+    parameter INT_PREG_NUMS = `INT_PREG_NUM,
+    parameter F_PREG_NUMS   = `FP_PREG_NUM
+)(
     // common
     input clk,
     input rst_n,
     
     // --- int reg files interface ---
-    input [`REG_ADDR_WIDTH-1:0] i_rs1_addr,
-    input [`REG_ADDR_WIDTH-1:0] i_rs2_addr,
+    input [`PREG_IDX_WIDTH-1:0] i_rs1_addr,
+    input [`PREG_IDX_WIDTH-1:0] i_rs2_addr,
     
     output [`DATA_WIDTH-1:0]    i_rs1_data,
     output [`DATA_WIDTH-1:0]    i_rs2_data,
     
-    input [`REG_ADDR_WIDTH-1:0] i_rd_addr,
+    input [`PREG_IDX_WIDTH-1:0] i_rd_addr,
     input [`DATA_WIDTH-1:0]     i_rd_data,
     input                       i_rd_we, // write enable
     
     // --- float reg files interface ---
-    input [`REG_ADDR_WIDTH-1:0] f_rs1_addr,
-    input [`REG_ADDR_WIDTH-1:0] f_rs2_addr,
+    input [`PREG_IDX_WIDTH-1:0] f_rs1_addr,
+    input [`PREG_IDX_WIDTH-1:0] f_rs2_addr,
     
     output [`DATA_WIDTH-1:0]    f_rs1_data,
     output [`DATA_WIDTH-1:0]    f_rs2_data,
     
-    input [`REG_ADDR_WIDTH-1:0] f_rd_addr,
+    input [`PREG_IDX_WIDTH-1:0] f_rd_addr,
     input [`DATA_WIDTH-1:0]     f_rd_data,
     input                       f_rd_we // write enable
 );

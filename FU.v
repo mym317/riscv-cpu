@@ -18,7 +18,7 @@ module IntAlu(
     input                   cmp_signed, // cmp: signed or unsigned
 
     // Outputs
-    output [`DATA_WIDTH-1:0] ALU_result,
+    output [`DATA_WIDTH-1:0] ALU_result
 );
 // -- add --
 wire [`DATA_WIDTH-1:0] inner_add_rs1;
@@ -27,7 +27,7 @@ wire                   inner_add_c_in;
 wire                   inner_add_res;
 assign inner_add_rs1 = ALU_op[`ALU_OP_ADD] ? rs1 : `DATA_WIDTH'b0;
 assign inner_add_rs2 = ALU_op[`ALU_OP_ADD] ? rs2 : `DATA_WIDTH'b0;
-assign inner_add_c_in = ALU_op[`ALU_OP_ADD] ? add_c_in
+assign inner_add_c_in = ALU_op[`ALU_OP_ADD] ? add_c_in : 1'b0;
 assign inner_add_res = inner_add_rs1 + inner_add_rs2 + inner_add_c_in;
 
 // -- cmp --
@@ -129,7 +129,7 @@ module IntMulDivALU(
     // TODO: Add clock signals for mul and div's sequential operations
 
     // Outputs
-    output [`DATA_WIDTH-1:0] ALU_result,
+    output [`DATA_WIDTH-1:0] ALU_result
 );
 // -- muls --
 

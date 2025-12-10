@@ -13,10 +13,8 @@ module IF(
 
 
     // Outputs
-    output [`INST_ADDR_WIDTH-1:0] out_inst_0,
-    output [`INST_ADDR_WIDTH-1:0] out_inst_1,
-    output [`INST_ADDR_WIDTH-1:0] out_inst_2,
-    output [`INST_ADDR_WIDTH-1:0] out_inst_3,
+    output [`INST_WIDTH-1:0] out_inst_0,
+    output [`INST_WIDTH-1:0] out_inst_1,
     output [`IF_BATCH_SIZE-1:0]   out_inst_valid, // mask to indicate which instruction is valid 
 );
 reg [`INST_ADDR_WIDTH-1:0] reg_PC;
