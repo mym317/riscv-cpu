@@ -13,26 +13,34 @@ module IF(
 
 
     // Outputs
-    output [`INST_WIDTH-1:0] out_inst_0,
-    output [`INST_WIDTH-1:0] out_inst_1,
-    output [`IF_BATCH_SIZE-1:0]   out_inst_valid, // mask to indicate which instruction is valid 
+    output reg [`INST_WIDTH-1:0] out_inst_addr_0,
+    output reg [`INST_WIDTH-1:0] out_inst_addr_1,
+    output reg [`IF_BATCH_SIZE-1:0]   out_inst_valid // mask to indicate which instruction is valid 
 );
 reg [`INST_ADDR_WIDTH-1:0] reg_PC;
 reg                   first_clk_passed;  // reserved for memory related timing
 reg                   second_clk_passed; // reserved for memory related timing
 
+localparam [(`INST_ADDR_WIDTH-1):0] FETCH_STRIDE = `IF_BATCH_SIZE * `INST_ADD_STEP;
+
 // TODO: Adapt to batch fetching
-assign next_PC = second_clk_passed ? reg_PC + `INST_ADD_STEP : reg_PC;
+wire [`INST_ADDR_WIDTH-1:0] next_PC = reg_PC + FETCH_STRIDE;
 
 always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         reg_PC <= `INST_INIT;
         first_clk_passed <= 1'b0;
         second_clk_passed <= 1'b0;
+        out_inst_addr_0 <= {`INST_WIDTH{1'b0}};
+        out_inst_addr_1 <= {`INST_WIDTH{1'b0}};
+        out_inst_valid  <= {`IF_BATCH_SIZE{1'b0}};
     end else begin
         reg_PC <= next_PC;
         first_clk_passed <= 1'b1;
         second_clk_passed <= first_clk_passed;
+        out_inst_addr_0 <= reg_PC;
+        out_inst_addr_1 <= reg_PC + `INST_ADD_STEP;
+        out_inst_valid  <= second_clk_passed ? {`IF_BATCH_SIZE{1'b1}} : {`IF_BATCH_SIZE{1'b0}};
     end
 end
 
