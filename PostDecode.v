@@ -13,6 +13,13 @@ module PostDecode (
     input  wire [`INST_WIDTH-1:0]      in_inst_1,
     input  wire [1:0]                  in_fu_type_0,
     input  wire [1:0]                  in_fu_type_1,
+    input  wire                        in_pred_taken_0,
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pred_target_0,
+    input  wire [`BP_GHR_BITS-1:0]     in_pred_hist_0,
+    input  wire                        in_pred_taken_1,
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pred_target_1,
+    input  wire [`BP_GHR_BITS-1:0]     in_pred_hist_1,
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pc_0,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rs1_0,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rs2_0,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rd_0,
@@ -21,6 +28,8 @@ module PostDecode (
     input  wire                        in_rs1_is_fp_0,
     input  wire                        in_rs2_is_fp_0,
     input  wire                        in_rd_is_fp_0,
+    input  wire [`ROB_IDX_WIDTH-1:0]   in_rob_idx_0,
+    input  wire                        in_rob_idx_valid_0,
     input  wire [`PREG_IDX_WIDTH-1:0]  in_rs1_preg_0,
     input  wire                        in_rs1_preg_valid_0,
     input  wire [`PREG_IDX_WIDTH-1:0]  in_rs2_preg_0,
@@ -30,6 +39,7 @@ module PostDecode (
     input  wire [`PREG_IDX_WIDTH-1:0]  in_old_rd_preg_0,
     input  wire                        in_old_rd_preg_valid_0,
 
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pc_1,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rs1_1,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rs2_1,
     input  wire [`REG_ADDR_WIDTH-1:0]  in_rd_1,
@@ -38,6 +48,8 @@ module PostDecode (
     input  wire                        in_rs1_is_fp_1,
     input  wire                        in_rs2_is_fp_1,
     input  wire                        in_rd_is_fp_1,
+    input  wire [`ROB_IDX_WIDTH-1:0]   in_rob_idx_1,
+    input  wire                        in_rob_idx_valid_1,
     input  wire [`PREG_IDX_WIDTH-1:0]  in_rs1_preg_1,
     input  wire                        in_rs1_preg_valid_1,
     input  wire [`PREG_IDX_WIDTH-1:0]  in_rs2_preg_1,
@@ -53,6 +65,10 @@ module PostDecode (
     output reg  [`INST_WIDTH-1:0]      out_inst_1,
     output reg  [1:0]                  out_fu_type_0,
     output reg  [1:0]                  out_fu_type_1,
+    output reg  [`INST_ADDR_WIDTH-1:0] out_pc_0,
+    output reg                         out_pred_taken_0,
+    output reg [`INST_ADDR_WIDTH-1:0]  out_pred_target_0,
+    output reg [`BP_GHR_BITS-1:0]      out_pred_hist_0,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rs1_0,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rs2_0,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rd_0,
@@ -61,6 +77,8 @@ module PostDecode (
     output reg                         out_rs1_is_fp_0,
     output reg                         out_rs2_is_fp_0,
     output reg                         out_rd_is_fp_0,
+    output reg  [`ROB_IDX_WIDTH-1:0]   out_rob_idx_0,
+    output reg                         out_rob_idx_valid_0,
     output reg  [`PREG_IDX_WIDTH-1:0]  out_rs1_preg_0,
     output reg                         out_rs1_preg_valid_0,
     output reg  [`PREG_IDX_WIDTH-1:0]  out_rs2_preg_0,
@@ -70,6 +88,7 @@ module PostDecode (
     output reg  [`PREG_IDX_WIDTH-1:0]  out_old_rd_preg_0,
     output reg                         out_old_rd_preg_valid_0,
 
+    output reg  [`INST_ADDR_WIDTH-1:0] out_pc_1,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rs1_1,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rs2_1,
     output reg  [`REG_ADDR_WIDTH-1:0]  out_rd_1,
@@ -78,6 +97,11 @@ module PostDecode (
     output reg                         out_rs1_is_fp_1,
     output reg                         out_rs2_is_fp_1,
     output reg                         out_rd_is_fp_1,
+    output reg                         out_pred_taken_1,
+    output reg [`INST_ADDR_WIDTH-1:0]  out_pred_target_1,
+    output reg [`BP_GHR_BITS-1:0]      out_pred_hist_1,
+    output reg  [`ROB_IDX_WIDTH-1:0]   out_rob_idx_1,
+    output reg                         out_rob_idx_valid_1,
     output reg  [`PREG_IDX_WIDTH-1:0]  out_rs1_preg_1,
     output reg                         out_rs1_preg_valid_1,
     output reg  [`PREG_IDX_WIDTH-1:0]  out_rs2_preg_1,
@@ -433,6 +457,11 @@ always @(posedge clk or negedge rst_n) begin
         out_inst_1 <= {`INST_WIDTH{1'b0}};
         out_fu_type_0 <= 2'b0;
         out_fu_type_1 <= 2'b0;
+        out_pc_0 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pc_1 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pred_taken_0 <= 1'b0;
+        out_pred_target_0 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pred_hist_0 <= {`BP_GHR_BITS{1'b0}};
         out_rs1_0 <= {`REG_ADDR_WIDTH{1'b0}};
         out_rs2_0 <= {`REG_ADDR_WIDTH{1'b0}};
         out_rd_0  <= {`REG_ADDR_WIDTH{1'b0}};
@@ -441,6 +470,8 @@ always @(posedge clk or negedge rst_n) begin
         out_rs1_is_fp_0 <= 1'b0;
         out_rs2_is_fp_0 <= 1'b0;
         out_rd_is_fp_0  <= 1'b0;
+        out_rob_idx_0 <= {`ROB_IDX_WIDTH{1'b0}};
+        out_rob_idx_valid_0 <= 1'b0;
         out_rs1_preg_0 <= {`PREG_IDX_WIDTH{1'b0}};
         out_rs1_preg_valid_0 <= 1'b0;
         out_rs2_preg_0 <= {`PREG_IDX_WIDTH{1'b0}};
@@ -458,6 +489,11 @@ always @(posedge clk or negedge rst_n) begin
         out_rs1_is_fp_1 <= 1'b0;
         out_rs2_is_fp_1 <= 1'b0;
         out_rd_is_fp_1  <= 1'b0;
+        out_pred_taken_1 <= 1'b0;
+        out_pred_target_1 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pred_hist_1 <= {`BP_GHR_BITS{1'b0}};
+        out_rob_idx_1 <= {`ROB_IDX_WIDTH{1'b0}};
+        out_rob_idx_valid_1 <= 1'b0;
         out_rs1_preg_1 <= {`PREG_IDX_WIDTH{1'b0}};
         out_rs1_preg_valid_1 <= 1'b0;
         out_rs2_preg_1 <= {`PREG_IDX_WIDTH{1'b0}};
@@ -509,6 +545,10 @@ always @(posedge clk or negedge rst_n) begin
         if (in_inst_valid[0]) begin
             out_inst_0 <= in_inst_0;
             out_fu_type_0 <= in_fu_type_0;
+            out_pc_0 <= in_pc_0;
+            out_pred_taken_0 <= in_pred_taken_0;
+            out_pred_target_0 <= in_pred_target_0;
+            out_pred_hist_0 <= in_pred_hist_0;
             out_rs1_0 <= in_rs1_0;
             out_rs2_0 <= in_rs2_0;
             out_rd_0  <= in_rd_0;
@@ -525,6 +565,8 @@ always @(posedge clk or negedge rst_n) begin
             out_rd_preg_valid_0 <= in_rd_preg_valid_0;
             out_old_rd_preg_0 <= in_old_rd_preg_0;
             out_old_rd_preg_valid_0 <= in_old_rd_preg_valid_0;
+            out_rob_idx_0 <= in_rob_idx_0;
+            out_rob_idx_valid_0 <= in_rob_idx_valid_0;
 
             out_fu_sel_0 <= fu_dec_0;
             out_int_op_0 <= int_op_dec_0;
@@ -555,6 +597,10 @@ always @(posedge clk or negedge rst_n) begin
             out_rs1_is_fp_0 <= 1'b0;
             out_rs2_is_fp_0 <= 1'b0;
             out_rd_is_fp_0  <= 1'b0;
+            out_pc_0 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_taken_0 <= 1'b0;
+            out_pred_target_0 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_hist_0 <= {`BP_GHR_BITS{1'b0}};
             out_rs1_preg_0 <= {`PREG_IDX_WIDTH{1'b0}};
             out_rs1_preg_valid_0 <= 1'b0;
             out_rs2_preg_0 <= {`PREG_IDX_WIDTH{1'b0}};
@@ -563,6 +609,8 @@ always @(posedge clk or negedge rst_n) begin
             out_rd_preg_valid_0 <= 1'b0;
             out_old_rd_preg_0 <= {`PREG_IDX_WIDTH{1'b0}};
             out_old_rd_preg_valid_0 <= 1'b0;
+            out_rob_idx_0 <= {`ROB_IDX_WIDTH{1'b0}};
+            out_rob_idx_valid_0 <= 1'b0;
 
             out_fu_sel_0 <= `FU_DEC_DUMMY;
             out_int_op_0 <= {`ALU_OP_WIDTH{1'b0}};
@@ -595,6 +643,10 @@ always @(posedge clk or negedge rst_n) begin
             out_rs1_is_fp_1 <= in_rs1_is_fp_1;
             out_rs2_is_fp_1 <= in_rs2_is_fp_1;
             out_rd_is_fp_1  <= in_rd_is_fp_1;
+            out_pred_taken_1 <= in_pred_taken_1;
+            out_pred_target_1 <= in_pred_target_1;
+            out_pred_hist_1 <= in_pred_hist_1;
+            out_pc_1 <= in_pc_1;
             out_rs1_preg_1 <= in_rs1_preg_1;
             out_rs1_preg_valid_1 <= in_rs1_preg_valid_1;
             out_rs2_preg_1 <= in_rs2_preg_1;
@@ -603,6 +655,8 @@ always @(posedge clk or negedge rst_n) begin
             out_rd_preg_valid_1 <= in_rd_preg_valid_1;
             out_old_rd_preg_1 <= in_old_rd_preg_1;
             out_old_rd_preg_valid_1 <= in_old_rd_preg_valid_1;
+            out_rob_idx_1 <= in_rob_idx_1;
+            out_rob_idx_valid_1 <= in_rob_idx_valid_1;
 
             out_fu_sel_1 <= fu_dec_1;
             out_int_op_1 <= int_op_dec_1;
@@ -633,6 +687,10 @@ always @(posedge clk or negedge rst_n) begin
             out_rs1_is_fp_1 <= 1'b0;
             out_rs2_is_fp_1 <= 1'b0;
             out_rd_is_fp_1  <= 1'b0;
+            out_pc_1 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_taken_1 <= 1'b0;
+            out_pred_target_1 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_hist_1 <= {`BP_GHR_BITS{1'b0}};
             out_rs1_preg_1 <= {`PREG_IDX_WIDTH{1'b0}};
             out_rs1_preg_valid_1 <= 1'b0;
             out_rs2_preg_1 <= {`PREG_IDX_WIDTH{1'b0}};
@@ -641,6 +699,8 @@ always @(posedge clk or negedge rst_n) begin
             out_rd_preg_valid_1 <= 1'b0;
             out_old_rd_preg_1 <= {`PREG_IDX_WIDTH{1'b0}};
             out_old_rd_preg_valid_1 <= 1'b0;
+            out_rob_idx_1 <= {`ROB_IDX_WIDTH{1'b0}};
+            out_rob_idx_valid_1 <= 1'b0;
 
             out_fu_sel_1 <= `FU_DEC_DUMMY;
             out_int_op_1 <= {`ALU_OP_WIDTH{1'b0}};

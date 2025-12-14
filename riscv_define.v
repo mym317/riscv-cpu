@@ -5,9 +5,15 @@
 `define REG_ADDR_WIDTH 5    // Register address width (32 logical registers)
 
 `define INST_INIT     `INST_ADDR_WIDTH'h1000 // Initial PC value
+`define TRAP_VECTOR   `INST_INIT             // Trap/exception entry
 `define INST_ADD_STEP 4    // PC increment step for each instruction
 
 `define IF_BATCH_SIZE 2    // Number of instructions fetched in one batch. Check out_inst_{0-1} in IF module
+
+// Branch predictor parameters
+`define BP_GHR_BITS  8
+`define BP_IDX_BITS  10
+`define BP_RAS_DEPTH 8
 
 // ALU ops
 `define ALU_OP_ADD 4'b0000 // sub can be achieved by add with c_in=1 and rs2 negated (2's complement)

@@ -9,8 +9,20 @@ module PreDecode (
     input  wire [`INST_WIDTH-1:0] in_inst_0,
     input  wire [`INST_WIDTH-1:0] in_inst_1,
     input  wire [`IF_BATCH_SIZE-1:0] in_inst_valid,
+    input  wire                        in_pred_taken_0,
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pred_target_0,
+    input  wire [`BP_GHR_BITS-1:0]     in_pred_hist_0,
+    input  wire                        in_pred_taken_1,
+    input  wire [`INST_ADDR_WIDTH-1:0] in_pred_target_1,
+    input  wire [`BP_GHR_BITS-1:0]     in_pred_hist_1,
 
     output reg  [`IF_BATCH_SIZE-1:0] out_inst_valid,
+    output reg                        out_pred_taken_0,
+    output reg [`INST_ADDR_WIDTH-1:0] out_pred_target_0,
+    output reg [`BP_GHR_BITS-1:0]     out_pred_hist_0,
+    output reg                        out_pred_taken_1,
+    output reg [`INST_ADDR_WIDTH-1:0] out_pred_target_1,
+    output reg [`BP_GHR_BITS-1:0]     out_pred_hist_1,
 
     // Micro-code fields for inst0
     output reg  [1:0]                   out_fu_type_0,
@@ -240,6 +252,12 @@ endfunction
 always @(posedge clk or negedge rst_n) begin
     if (!rst_n) begin
         out_inst_valid <= {`IF_BATCH_SIZE{1'b0}};
+        out_pred_taken_0 <= 1'b0;
+        out_pred_target_0 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pred_hist_0 <= {`BP_GHR_BITS{1'b0}};
+        out_pred_taken_1 <= 1'b0;
+        out_pred_target_1 <= {`INST_ADDR_WIDTH{1'b0}};
+        out_pred_hist_1 <= {`BP_GHR_BITS{1'b0}};
 
         out_fu_type_0  <= `ALU_TYPE_INT;
         out_rs1_0      <= {`REG_ADDR_WIDTH{1'b0}};
@@ -262,6 +280,12 @@ always @(posedge clk or negedge rst_n) begin
         out_rd_is_fp_1 <= 1'b0;
     end else begin
         out_inst_valid <= in_inst_valid;
+        out_pred_taken_0 <= in_pred_taken_0;
+        out_pred_target_0 <= in_pred_target_0;
+        out_pred_hist_0 <= in_pred_hist_0;
+        out_pred_taken_1 <= in_pred_taken_1;
+        out_pred_target_1 <= in_pred_target_1;
+        out_pred_hist_1 <= in_pred_hist_1;
 
         if (in_inst_valid[0]) begin
             out_fu_type_0  <= decode_fu_type(in_inst_0);
@@ -283,6 +307,9 @@ always @(posedge clk or negedge rst_n) begin
             out_rs1_is_fp_0<= 1'b0;
             out_rs2_is_fp_0<= 1'b0;
             out_rd_is_fp_0 <= 1'b0;
+            out_pred_taken_0 <= 1'b0;
+            out_pred_target_0 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_hist_0 <= {`BP_GHR_BITS{1'b0}};
         end
 
         if (in_inst_valid[1]) begin
@@ -305,6 +332,9 @@ always @(posedge clk or negedge rst_n) begin
             out_rs1_is_fp_1<= 1'b0;
             out_rs2_is_fp_1<= 1'b0;
             out_rd_is_fp_1 <= 1'b0;
+            out_pred_taken_1 <= 1'b0;
+            out_pred_target_1 <= {`INST_ADDR_WIDTH{1'b0}};
+            out_pred_hist_1 <= {`BP_GHR_BITS{1'b0}};
         end
     end
 end
