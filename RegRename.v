@@ -358,6 +358,8 @@ module RegRename #(
 
 localparam INT_PREG_COUNT = `INT_PREG_NUM;
 localparam FP_PREG_COUNT  = `FP_PREG_NUM;
+localparam [`PREG_IDX_WIDTH:0] INT_FREE_INIT_TAIL = (INT_PREG_COUNT > ARCH_REGS) ? (INT_PREG_COUNT-ARCH_REGS) : 0;
+localparam [`PREG_IDX_WIDTH:0] FP_FREE_INIT_TAIL  = (FP_PREG_COUNT > ARCH_REGS) ? (FP_PREG_COUNT-ARCH_REGS) : 0;
 
 // Logical reg -> physical reg maps
 reg [`PREG_IDX_WIDTH-1:0] int_map [0:ARCH_REGS-1];
@@ -595,17 +597,37 @@ always @(posedge clk or negedge rst_n) begin
         out_rob_idx_valid_0 <= 1'b0;
         out_rob_idx_1 <= {`ROB_IDX_WIDTH{1'b0}};
         out_rob_idx_valid_1 <= 1'b0;
-        int_free_head <= int_head_cp[flush_rob_idx];
-        int_free_tail <= int_tail_cp[flush_rob_idx];
-        int_free_count <= int_count_cp[flush_rob_idx];
-        fp_free_head  <= fp_head_cp[flush_rob_idx];
-        fp_free_tail  <= fp_tail_cp[flush_rob_idx];
-        fp_free_count <= fp_count_cp[flush_rob_idx];
+        int_free_head <= 0;
+        int_free_tail <= INT_FREE_INIT_TAIL;
+        int_free_count <= INT_FREE_INIT_TAIL;
+        fp_free_head  <= 0;
+        fp_free_tail  <= FP_FREE_INIT_TAIL;
+        fp_free_count <= FP_FREE_INIT_TAIL;
         for (i=0; i<ARCH_REGS; i=i+1) begin
-            int_map[i] <= int_map_cp[flush_rob_idx][i];
-            fp_map[i]  <= fp_map_cp[flush_rob_idx][i];
-            int_map_valid[i] <= int_map_v_cp[flush_rob_idx][i];
-            fp_map_valid[i]  <= fp_map_v_cp[flush_rob_idx][i];
+            int_map[i] <= i[`PREG_IDX_WIDTH-1:0];
+            fp_map[i]  <= i[`PREG_IDX_WIDTH-1:0];
+            int_map_valid[i] <= 1'b1;
+            fp_map_valid[i]  <= 1'b1;
+        end
+        for (i=ARCH_REGS; i<INT_PREG_COUNT; i=i+1) begin
+            int_free[i-ARCH_REGS] <= i[`PREG_IDX_WIDTH-1:0];
+        end
+        for (i=ARCH_REGS; i<FP_PREG_COUNT; i=i+1) begin
+            fp_free[i-ARCH_REGS] <= i[`PREG_IDX_WIDTH-1:0];
+        end
+        for (j=0; j<`ROB_SIZE; j=j+1) begin
+            int_head_cp[j]  <= 0;
+            int_tail_cp[j]  <= INT_FREE_INIT_TAIL;
+            int_count_cp[j] <= INT_FREE_INIT_TAIL;
+            fp_head_cp[j]   <= 0;
+            fp_tail_cp[j]   <= FP_FREE_INIT_TAIL;
+            fp_count_cp[j]  <= FP_FREE_INIT_TAIL;
+            for (i=0; i<ARCH_REGS; i=i+1) begin
+                int_map_cp[j][i] <= i[`PREG_IDX_WIDTH-1:0];
+                fp_map_cp[j][i]  <= i[`PREG_IDX_WIDTH-1:0];
+                int_map_v_cp[j][i] <= 1'b1;
+                fp_map_v_cp[j][i]  <= 1'b1;
+            end
         end
     end else if (flush) begin
         out_inst_valid <= {`IF_BATCH_SIZE{1'b0}};
@@ -627,8 +649,12 @@ always @(posedge clk or negedge rst_n) begin
         out_rob_idx_valid_0 <= 1'b0;
         out_rob_idx_1 <= {`ROB_IDX_WIDTH{1'b0}};
         out_rob_idx_valid_1 <= 1'b0;
-        int_free_head <= 0; int_free_tail <= 0; int_free_count <= 0;
-        fp_free_head  <= 0; fp_free_tail  <= 0; fp_free_count  <= 0;
+        int_free_head <= 0;
+        int_free_tail <= INT_FREE_INIT_TAIL;
+        int_free_count <= INT_FREE_INIT_TAIL;
+        fp_free_head  <= 0;
+        fp_free_tail  <= FP_FREE_INIT_TAIL;
+        fp_free_count <= FP_FREE_INIT_TAIL;
         for (i=0; i<ARCH_REGS; i=i+1) begin
             int_map[i] <= i[`PREG_IDX_WIDTH-1:0];
             fp_map[i]  <= i[`PREG_IDX_WIDTH-1:0];
@@ -638,25 +664,21 @@ always @(posedge clk or negedge rst_n) begin
         for (i=ARCH_REGS; i<INT_PREG_COUNT; i=i+1) begin
             int_free[i-ARCH_REGS] <= i[`PREG_IDX_WIDTH-1:0];
         end
-        int_free_tail  <= (INT_PREG_COUNT > ARCH_REGS) ? (INT_PREG_COUNT-ARCH_REGS) : 0;
-        int_free_count <= (INT_PREG_COUNT > ARCH_REGS) ? (INT_PREG_COUNT-ARCH_REGS) : 0;
         for (i=ARCH_REGS; i<FP_PREG_COUNT; i=i+1) begin
             fp_free[i-ARCH_REGS] <= i[`PREG_IDX_WIDTH-1:0];
         end
-        fp_free_tail  <= (FP_PREG_COUNT > ARCH_REGS) ? (FP_PREG_COUNT-ARCH_REGS) : 0;
-        fp_free_count <= (FP_PREG_COUNT > ARCH_REGS) ? (FP_PREG_COUNT-ARCH_REGS) : 0;
         for (j=0; j<`ROB_SIZE; j=j+1) begin
-            int_head_cp[j]  <= int_free_head;
-            int_tail_cp[j]  <= int_free_tail;
-            int_count_cp[j] <= int_free_count;
-            fp_head_cp[j]   <= fp_free_head;
-            fp_tail_cp[j]   <= fp_free_tail;
-            fp_count_cp[j]  <= fp_free_count;
+            int_head_cp[j]  <= 0;
+            int_tail_cp[j]  <= INT_FREE_INIT_TAIL;
+            int_count_cp[j] <= INT_FREE_INIT_TAIL;
+            fp_head_cp[j]   <= 0;
+            fp_tail_cp[j]   <= FP_FREE_INIT_TAIL;
+            fp_count_cp[j]  <= FP_FREE_INIT_TAIL;
             for (i=0; i<ARCH_REGS; i=i+1) begin
-                int_map_cp[j][i] <= int_map[i];
-                fp_map_cp[j][i]  <= fp_map[i];
-                int_map_v_cp[j][i] <= int_map_valid[i];
-                fp_map_v_cp[j][i]  <= fp_map_valid[i];
+                int_map_cp[j][i] <= i[`PREG_IDX_WIDTH-1:0];
+                fp_map_cp[j][i]  <= i[`PREG_IDX_WIDTH-1:0];
+                int_map_v_cp[j][i] <= 1'b1;
+                fp_map_v_cp[j][i]  <= 1'b1;
             end
         end
     end else begin

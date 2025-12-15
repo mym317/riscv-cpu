@@ -619,6 +619,46 @@ PostDecode u_postdecode (
 );
 
 // ----------------------------
+// Shared PRF instance
+// ----------------------------
+PhysicalRegFileShared u_prf (
+    .clk(clk),
+    .rst_n(rst_n),
+    // Integer reads
+    .i_rs1_addr0(post_rs1_preg_0),
+    .i_rs2_addr0(post_rs2_preg_0),
+    .i_rs1_addr1(post_rs1_preg_1),
+    .i_rs2_addr1(post_rs2_preg_1),
+    .i_rs1_data0(prf_int_rs1_data0),
+    .i_rs2_data0(prf_int_rs2_data0),
+    .i_rs1_data1(prf_int_rs1_data1),
+    .i_rs2_data1(prf_int_rs2_data1),
+    // Integer writes
+    .i_rd0_addr(prf_i_wr_addr0),
+    .i_rd0_data(prf_i_wr_data0),
+    .i_rd0_we(prf_i_wr_we0),
+    .i_rd1_addr(prf_i_wr_addr1),
+    .i_rd1_data(prf_i_wr_data1),
+    .i_rd1_we(prf_i_wr_we1),
+    // FP reads
+    .f_rs1_addr0(post_rs1_preg_0),
+    .f_rs2_addr0(post_rs2_preg_0),
+    .f_rs1_addr1(post_rs1_preg_1),
+    .f_rs2_addr1(post_rs2_preg_1),
+    .f_rs1_data0(prf_fp_rs1_data0),
+    .f_rs2_data0(prf_fp_rs2_data0),
+    .f_rs1_data1(prf_fp_rs1_data1),
+    .f_rs2_data1(prf_fp_rs2_data1),
+    // FP writes
+    .f_rd0_addr(prf_f_wr_addr0),
+    .f_rd0_data(prf_f_wr_data0),
+    .f_rd0_we(prf_f_wr_we0),
+    .f_rd1_addr(prf_f_wr_addr1),
+    .f_rd1_data(prf_f_wr_data1),
+    .f_rd1_we(prf_f_wr_we1)
+);
+
+// ----------------------------
 // Issue / Execute (simplified)
 // ----------------------------
 IssueBuffer u_issue (

@@ -43,7 +43,11 @@ module BranchPredictor #(
         input [GHR_BITS-1:0] hist;
         input [`INST_ADDR_WIDTH-1:0] pc;
         begin
-            make_idx = hist[IDX_BITS-1:0] ^ pc[IDX_BITS+1:2];
+            if (GHR_BITS >= IDX_BITS) begin
+                make_idx = hist[IDX_BITS-1:0] ^ pc[IDX_BITS+1:2];
+            end else begin
+                make_idx = {{(IDX_BITS-GHR_BITS){1'b0}}, hist} ^ pc[IDX_BITS+1:2];
+            end
         end
     endfunction
 
