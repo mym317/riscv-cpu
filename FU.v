@@ -24,7 +24,7 @@ module IntAlu(
 wire [`DATA_WIDTH-1:0] inner_add_rs1;
 wire [`DATA_WIDTH-1:0] inner_add_rs2;
 wire                   inner_add_c_in;
-wire                   inner_add_res;
+wire [`DATA_WIDTH-1:0] inner_add_res;
 assign inner_add_rs1 = ALU_op[`ALU_OP_ADD] ? rs1 : `DATA_WIDTH'b0;
 assign inner_add_rs2 = ALU_op[`ALU_OP_ADD] ? rs2 : `DATA_WIDTH'b0;
 assign inner_add_c_in = ALU_op[`ALU_OP_ADD] ? add_c_in : 1'b0;
