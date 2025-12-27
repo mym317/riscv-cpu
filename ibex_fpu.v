@@ -4,7 +4,7 @@ module ibex_fpu
     input  logic [31:0]               B_i, 
     input  logic [31:0]               C_i,
     input  logic [3:0]         		  opcode_i, 
-    input  logic [2:0]  			  rounding_mode_i,
+    input  logic [3:0]  			  rounding_mode_i,
     
     output logic [31:0]               result_o,
     output logic                      exception_flag_o
