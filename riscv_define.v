@@ -103,7 +103,7 @@
 `define FP_OP_FEQ   4'd8
 `define FP_OP_FLT 4'd9
 
-`define ROUNDING_WIDTH 4
+`define ROUNDING_WIDTH_* 4
 `define RNE  4'd10 
 `define RTZ  4'd11 
 `define RDN  4'd12 
