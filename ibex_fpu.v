@@ -3,14 +3,12 @@ module ibex_fpu
     input  logic [31:0]               A_i, 
     input  logic [31:0]               B_i, 
     input  logic [31:0]               C_i,
-    input  ibex_pkg::alu_op_e         opcode_i, 
-    input  ibex_pkg::rounding_mode_e  rounding_mode_i,
+    input  logic [3:0]         		  opcode_i, 
+    input  logic [2:0]  			  rounding_mode_i,
     
     output logic [31:0]               result_o,
     output logic                      exception_flag_o
   );
-
-    import ibex_pkg::*;
 	
 	//wire [31:0] result_o;
 	wire [7:0] a_exponent;
@@ -36,6 +34,14 @@ module ibex_fpu
 	reg [31:0] multiplier_b_in;
 	wire [31:0] multiplier_out;
 
+	reg [31:0] less_a_in;
+	reg [31:0] less_b_in;
+	wire less_out;
+
+	reg [31:0] eq_a_in;
+	reg [31:0] eq_b_in;
+	wire eq_out;
+
 	assign result_o[31] = o_sign;
 	assign result_o[30:23] = o_exponent;
 	assign result_o[22:0] = o_mantissa[22:0];
@@ -52,16 +58,16 @@ module ibex_fpu
 	assign c_exponent[7:0] = C_i[30:23];          //
 	assign c_mantissa[23:0] = {1'b1, C_i[22:0]};  // 
 
-	assign ADD = opcode_i == ALU_FADD || opcode_i == ALU_FADDDIV;
-	assign SUB = opcode_i == ALU_FSUB;
-	//assign DIV = opcode_i == ALU_FDIV;
-	assign MUL = opcode_i == ALU_FMUL;
-	assign MADD = opcode_i == ALU_FMADD;
-	assign MSUB = opcode_i == ALU_FMSUB;
-	assign NMSUB = opcode_i == ALU_FNMSUB;
-	assign NMADD = opcode_i == ALU_FNMADD;
-	assign SUBABS = opcode_i == ALU_FSUBABS;
-	//assign ADDDIV = opcode_i == ALU_FADDDIV;
+	assign ADD = opcode_i == FP_OP_ADD;
+	assign SUB = opcode_i == FP_OP_SUB;
+	assign MUL = opcode_i == FP_OP_MUL;
+	assign MADD = opcode_i == FP_OP_MADD;
+	assign MSUB = opcode_i == FP_OP_MSUB;
+	assign NMSUB = opcode_i == FP_OP_NMSUB;
+	assign NMADD = opcode_i == FP_OP_NMAD;
+	assign SUBABS = opcode_i == FP_OP_SUBABS;
+	assign EQ = opcode_i == FP_OP_FEQ;
+	assign LT = opcode_i == FP_OP_FLT;
 
 	adder A1
 	(
@@ -83,6 +89,21 @@ module ibex_fpu
 		.b(multiplier_b_in),
 		.out(multiplier_out)
 	);
+
+	fless L1
+	( 
+		.a(less_a_in),
+		.b(less_b_in),
+		.c(less_out)
+	);
+
+	feq E1
+	(
+		.a(eq_a_in),
+		.b(eq_b_in),
+		.c(eq_out)
+	);
+
 
 	always @ (*) begin
 		exception_flag_o = 1'b0;
@@ -364,6 +385,27 @@ module ibex_fpu
 				o_sign = ~madder_out[31];
 				o_exponent = madder_out[30:23];
 				o_mantissa = madder_out[22:0];
+			end
+		end	else if (EQ) begin  
+		    // if either a or b is NaN
+			if ((a_exponent == 255 && a_mantissa != 0) || (b_exponent == 255) && (b_mantissa != 0)) begin
+				exception_flag_o = 1'b1;
+				comparison_result_o = 1'b0;
+			end
+			else begin
+				eq_a_in = A_i;
+				eq_b_in = B_i;
+				comparison_result_o = eq_out;
+			end
+		end else begin        // LT
+			if ((a_exponent == 255 && a_mantissa != 0) || (b_exponent == 255) && (b_mantissa != 0)) begin
+				exception_flag_o = 1'b1;
+				comparison_result_o = 1'b0;
+			end
+			else begin
+				less_a_in = A_i;
+				less_b_in = B_i;
+				comparison_result_o = less_out;
 			end
 		end
 
@@ -651,4 +693,43 @@ module multiplication_normaliser(in_e, in_m, out_e, out_m);
 			out_m = in_m << 1;
 		end
   end
+endmodule
+
+module fless(
+    input wire [31:0] a,
+    input wire [31:0] b,
+    output wire c
+    );
+    wire s_a = a[31];
+    wire s_b = b[31];
+    wire [7:0] e_a = a[30:23];
+    wire [7:0] e_b = b[30:23];
+    wire [22:0] m_a = a[22:0];
+    wire [22:0] m_b = b[22:0];
+    
+    wire [1:0] sel_s = 
+    (~s_a & s_b) ? 0 : 
+    (s_a & ~s_b) ? 1 :
+    (s_a & s_b) ? 2: 3;
+    
+    assign c = 
+    (a == 32'h80000000 && b == 32'h00000000) ? 0 :
+    (sel_s == 1) ? 1 : 
+    (sel_s == 2 && e_a > e_b) ? 1 :
+    (sel_s == 3 && e_a < e_b) ? 1 :
+    (sel_s == 2 && e_a == e_b && m_a > m_b) ? 1 :
+    (sel_s == 3 && e_a == e_b && m_a < m_b) ? 1 : 0;
+endmodule
+
+
+module feq(
+    input wire [31:0] a,
+    input wire [31:0] b,
+    output wire c
+    );
+    assign c = 
+    (a == 32'h80000000 && b == 32'h00000000) ? 1 :
+    (a == 32'h00000000 && b == 32'h80000000) ? 1 :
+    a == b ? 1 :
+    0;
 endmodule
